@@ -149,7 +149,7 @@ if ($like !== "") {
         CAST((r.price + COALESCE(s.price, 0)) AS CHAR) LIKE ?
     )";
     $types .= "ssssssss";
-    for ($i = 0; $i < 7; $i++) {
+    for ($i = 0; $i < 8; $i++) {
         $params[] = "%$like%";
     }
 }
