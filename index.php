@@ -129,9 +129,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
         <?php include "head.php"; ?>
     </head>
     <body>
-        <?php include "nav.php"; ?>
-
-        <main class="flex flex-col p-2">
+        <main class="flex flex-col">
             <?php if($error !== ""): ?>
                 <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
             <?php endif; ?>

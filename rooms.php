@@ -116,8 +116,6 @@ $result = mysqli_query($conn, "
         <?php include "head.php"; ?>
     </head>
     <body>
-        <?php include "nav.php"; ?>
-
         <main>
             <?php if($error !== ""): ?>
                 <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
