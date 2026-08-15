@@ -112,7 +112,8 @@ $result = mysqli_query($conn, "
 <!DOCTYPE html>
 <html>
     <head>
-        <title>bookIt</title>
+        <?php $page_title = "Rooms"; ?>
+        <?php include "head.php"; ?>
     </head>
     <body>
         <?php include "nav.php"; ?>

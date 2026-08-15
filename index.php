@@ -125,7 +125,8 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
 <!DOCTYPE html>
 <html>
     <head>
-        <title>bookIt</title>
+        <?php $page_title = "Bookings"; ?>
+        <?php include "head.php"; ?>
     </head>
     <body>
         <?php include "nav.php"; ?>
