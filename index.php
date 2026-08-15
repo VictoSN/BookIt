@@ -92,6 +92,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                 <div>
                     <label>Service Option:</label>
                     <select name="service_id">
+                        <option value="">None</option>
                         <?php while ($service = mysqli_fetch_assoc($services)): ?>
                             <option value="<?php echo $service["id"]; ?>">
                                 <?php echo htmlspecialchars($service["service_name"]); ?> <?php echo htmlspecialchars($service["service_number"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
