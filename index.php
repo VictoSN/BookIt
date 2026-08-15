@@ -14,6 +14,8 @@ $service_id = $_POST["service_id"] ?? "";
 $error = "";
 $action = $_POST["action"] ?? "";
 
+$search = trim($_GET["search"] ?? "");
+
 // The router, every form have a hidden 'action' field and this decides the action
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($action === "add") {
@@ -110,13 +112,43 @@ if ($edit_id !== "" && is_numeric($edit_id) && $_SERVER["REQUEST_METHOD"] !== "P
     mysqli_stmt_close($stmt);
 }
 
-$result = mysqli_query($conn, "
+$like = str_replace(["%", "_"], ["\\%", "\\_"], $search);
+
+$sql = "
     SELECT g.id as guest_id, g.name, g.birth_date, g.booking_date, r.room_number, r.class, s.service_number, s.service_name, (r.price + COALESCE(s.price, 0)) AS total_price, g.created_at 
     FROM guests g
     LEFT JOIN rooms r ON g.room_id = r.id
     LEFT JOIN services s ON g.service_id = s.id
-    ORDER BY created_at DESC
-");
+    WHERE 1=1
+";
+
+$types = "";
+$params = [];
+
+if ($like !== "") {
+    $sql .= " AND (
+        g.name LIKE ? OR
+        g.birth_date LIKE ? OR
+        g.booking_date LIKE ? OR
+        r.room_number LIKE ? OR
+        r.class LIKE ? OR
+        s.service_number LIKE ? OR
+        s.service_name LIKE ?
+    )";
+    $types .= "sssssss";
+    for ($i = 0; $i < 7; $i++) {
+        $params[] = "%$like%";
+    }
+}
+
+$sql .= " ORDER BY g.created_at DESC";
+
+$stmt = mysqli_prepare($conn, $sql);
+if($params) {
+    mysqli_stmt_bind_param($stmt, $types, ...$params); // ...params will spread the array into arguments
+}
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 $rooms = mysqli_query($conn, "SELECT id, room_number, class, price FROM rooms ORDER BY id DESC");
 $services = mysqli_query($conn, "SELECT id, service_name, service_number, price FROM services ORDER BY id DESC");
@@ -129,13 +161,51 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
         <?php include "head.php"; ?>
     </head>
     <body>
-        <main class="flex flex-col">
+        <main class="flex flex-col w-full px-8">
             <?php if($error !== ""): ?>
                 <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
             <?php endif; ?>
-    
-            <form method="post">
-                <div class="flex flex-row">
+        
+            <div class="flex flex-row justify-between items-center">
+                <p>Booking</p>
+                <div>
+                    <form method="get">
+                        <input placeholder="Search" name="search" value="<?php echo htmlspecialchars($search); ?>" class="border-b border-black">
+                    </form>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>No</th><th>Name</th><th>Birth Date</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    <?php $row_number = 1; ?>
+                    <?php while($row = mysqli_fetch_assoc($result)): ?>
+                        <tr>
+                            <td><?php echo $row_number; ?></td>
+                            <td><?php echo htmlspecialchars($row["name"]); ?></td>
+                            <td><?php echo $row["birth_date"]; ?></td>
+                            <td><?php echo $row["booking_date"]; ?></td>
+                            <td><?php echo htmlspecialchars($row["room_number"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
+                            <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . " - " . htmlspecialchars($row["service_name"]) : "-"; ?></td>
+                            <td><?php echo $row["total_price"]; ?></td>
+                            <td><?php echo $row["created_at"]; ?></td>
+                            <td>
+                                <a href="index.php?id=<?php echo htmlspecialchars($row["guest_id"]); ?>">Edit</a>
+                                <form method="post">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["guest_id"]); ?>">
+                                    <button type="submit" onclick="return confirm('Delete this booking?')">Delete</button>
+                                </form>
+                            </td>
+                            <?php $row_number++; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+
+            <form method="post" class="fixed bottom-10">
+                <div class="flex flex-row gap-2">
                     <div>
                         <label>Name:</label>
                         <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>">
@@ -175,48 +245,18 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                             <?php endwhile; ?>
                         </select>
                     </div>
+
+                    <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
+                    <?php if($edit_id !== ""): ?>
+                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
+                    <?php endif; ?>
+                    <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
+                    
+                    <?php if($edit_id !== ""): ?>
+                        <a href="index.php">Cancel</a>
+                    <?php endif; ?>
                 </div>
-    
-                <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
-                <?php if($edit_id !== ""): ?>
-                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
-                <?php endif; ?>
-                <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
-                
-                <?php if($edit_id !== ""): ?>
-                    <a href="index.php">Cancel</a>
-                <?php endif; ?>
             </form>
-    
-            <table>
-                <thead>
-                    <tr><th>No</th><th>Name</th><th>Birth Date</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    <?php $row_number = 1; ?>
-                    <?php while($row = mysqli_fetch_assoc($result)): ?>
-                        <tr>
-                            <td><?php echo $row_number; ?></td>
-                            <td><?php echo htmlspecialchars($row["name"]); ?></td>
-                            <td><?php echo $row["birth_date"]; ?></td>
-                            <td><?php echo $row["booking_date"]; ?></td>
-                            <td><?php echo htmlspecialchars($row["room_number"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
-                            <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . " - " . htmlspecialchars($row["service_name"]) : "-"; ?></td>
-                            <td><?php echo $row["total_price"]; ?></td>
-                            <td><?php echo $row["created_at"]; ?></td>
-                            <td>
-                                <a href="index.php?id=<?php echo htmlspecialchars($row["guest_id"]); ?>">Edit</a>
-                                <form method="post">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["guest_id"]); ?>">
-                                    <button type="submit" onclick="return confirm('Delete this booking?')">Delete</button>
-                                </form>
-                            </td>
-                            <?php $row_number++; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
         </main>
     </body>    
 </html>
