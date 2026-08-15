@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 $result = mysqli_query($conn, "
-    SELECT g.name, g.birth_date, g.booking_date, r.room_number, r.class, s.service_number, s.service_name, (r.price + COALESCE(s.price, 0)) AS total_price, g.created_at 
+    SELECT g.id as guest_id, g.name, g.birth_date, g.booking_date, r.room_number, r.class, s.service_number, s.service_name, (r.price + COALESCE(s.price, 0)) AS total_price, g.created_at 
     FROM guests g
     LEFT JOIN rooms r ON g.room_id = r.id
     LEFT JOIN services s ON g.service_id = s.id
@@ -116,7 +116,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                         <td><?php echo $row["birth_date"]; ?></td>
                         <td><?php echo $row["booking_date"]; ?></td>
                         <td><?php echo htmlspecialchars($row["room_number"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
-                        <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . "-" . htmlspecialchars($row["service_name"]) : "-"; ?></td>
+                        <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . " - " . htmlspecialchars($row["service_name"]) : "-"; ?></td>
                         <td><?php echo $row["total_price"]; ?></td>
                         <td><?php echo $row["created_at"]; ?></td>
                     </tr>
