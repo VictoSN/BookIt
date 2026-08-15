@@ -41,13 +41,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $count_result = mysqli_stmt_get_result($count_stmt);
         $count = mysqli_fetch_row($count_result)[0];
 
+        if(!is_numeric($id)) {
+            $error = "Invalid room id.";
+        }
+
         if ($count > 0) {
             $error = "This room has $count booking(s), reassign or delete them first.";
         }
 
-        if(!is_numeric($id)) {
-            $error = "Invalid room id.";
-        } elseif ($error === "") {
+        if ($error === "") {
             // Ensure booked rooms cannot be deleted
             $stmt = mysqli_prepare($conn, "DELETE FROM rooms WHERE id = ?");
             mysqli_stmt_bind_param($stmt, "i", $id);

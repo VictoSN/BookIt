@@ -37,13 +37,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $count_result = mysqli_stmt_get_result($count_stmt);
         $count = mysqli_fetch_row($count_result)[0];
 
+        if(!is_numeric($id)) {
+            $error = "Invalid service id.";
+        }
+
         if ($count > 0) {
             $error = "This service has $count booking(s), reassign or delete them first.";
         }
 
-        if(!is_numeric($id)) {
-            $error = "Invalid service id.";
-        } elseif ($error === "") {
+        if ($error === "") {
             // Ensure booked services cannot be deleted
             $stmt = mysqli_prepare($conn, "DELETE FROM services WHERE id = ?");
             mysqli_stmt_bind_param($stmt, "i", $id);
