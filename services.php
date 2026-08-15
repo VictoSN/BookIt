@@ -11,6 +11,8 @@ $price = $_POST["price"] ?? "";
 $error = "";
 $action = $_POST["action"] ?? "";
 
+$search = trim($_GET["search"] ?? "");
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($action === "add") {
         $service_name = trim($service_name);
@@ -96,11 +98,45 @@ if ($edit_id !== "" && is_numeric($edit_id) && $_SERVER["REQUEST_METHOD"] !== "P
     mysqli_stmt_close($stmt);
 }
 
-$result = mysqli_query($conn, "
+$sort_options = [
+    "newest"    => "id DESC",
+    "oldest"    => "id ASC",
+    "name_az"   => "service_name ASC",
+    "name_za"   => "service_name DESC",
+    "price_low" => "price ASC",
+    "price_high" => "price DESC",
+];
+
+$sort = $_GET["sort"] ?? "";
+$sort_sql = $sort_options[$sort] ?? $sort_options["newest"];
+
+$like = str_replace(["%", "_"], ["\\%", "\\_"], $search);
+
+$sql = "
     SELECT id, service_name, service_number, price
     FROM services
-    ORDER BY id DESC
-");
+    WHERE 1=1
+";
+
+$types = "";
+$params = [];
+
+if ($like !== "") {
+    $sql .= " AND (service_name LIKE ? OR service_number LIKE ? OR CAST(price AS CHAR) LIKE ?)";
+    $types .= "sss";
+    for ($i = 0; $i < 3; $i++) {
+        $params[] = "%$like%";
+    }
+}
+
+$sql .= " ORDER BY $sort_sql";
+
+$stmt = mysqli_prepare($conn, $sql);
+if ($params) {
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+}
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 
 <!DOCTYPE html>
@@ -144,6 +180,23 @@ $result = mysqli_query($conn, "
                 <?php endif; ?>
             </form>
     
+            <div class="flex flex-row justify-between items-center">
+                <p>Service</p>
+                <div>
+                    <form method="get">
+                        <input placeholder="Search" name="search" value="<?php echo htmlspecialchars($search); ?>" class="border-b border-black">
+                        <select name="sort" onchange="this.form.submit()">
+                            <option value="newest" <?php echo $sort === "newest" ? "selected" : ""; ?>>Newest first</option>
+                            <option value="oldest" <?php echo $sort === "oldest" ? "selected" : ""; ?>>Oldest first</option>
+                            <option value="name_az" <?php echo $sort === "name_az" ? "selected" : ""; ?>>Name A-Z</option>
+                            <option value="name_za" <?php echo $sort === "name_za" ? "selected" : ""; ?>>Name Z-A</option>
+                            <option value="price_low" <?php echo $sort === "price_low" ? "selected" : ""; ?>>Price low to high</option>
+                            <option value="price_high" <?php echo $sort === "price_high" ? "selected" : ""; ?>>Price high to low</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
             <table>
                 <thead>
                     <tr><th>No</th><th>Service Name</th><th>Service Number</th><th>Price</th><th>Actions</th></tr>

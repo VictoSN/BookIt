@@ -10,6 +10,7 @@ $price = $_POST["price"] ?? "";
 
 $error = "";
 $action = $_POST["action"] ?? "";
+$search = trim($_GET["search"] ?? "");
 
 $valid_classes = ["Single", "Twin", "En-Suite", "Premium"];
 
@@ -102,11 +103,46 @@ if ($edit_id !== "" && is_numeric($edit_id) && $_SERVER["REQUEST_METHOD"] !== "P
     mysqli_stmt_close($stmt);
 }
 
-$result = mysqli_query($conn, "
+$sort_options = [
+    "newest"    => "id DESC",
+    "oldest"    => "id ASC",
+    "room_az"   => "room_number ASC",
+    "room_za"   => "room_number DESC",
+    "class_az"  => "class ASC",
+    "price_low" => "price ASC",
+    "price_high" => "price DESC",
+];
+
+$sort = $_GET["sort"] ?? "";
+$sort_sql = $sort_options[$sort] ?? $sort_options["newest"];
+
+$like = str_replace(["%", "_"], ["\\%", "\\_"], $search);
+
+$sql = "
     SELECT id, room_number, class, price
     FROM rooms
-    ORDER BY id DESC
-");
+    WHERE 1=1
+";
+
+$types = "";
+$params = [];
+
+if ($like !== "") {
+    $sql .= " AND (room_number LIKE ? OR class LIKE ? OR CAST(price AS CHAR) LIKE ?)";
+    $types .= "sss";
+    for ($i = 0; $i < 3; $i++) {
+        $params[] = "%$like%";
+    }
+}
+
+$sql .= " ORDER BY $sort_sql";
+
+$stmt = mysqli_prepare($conn, $sql);
+if ($params) {
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+}
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 
 <!DOCTYPE html>
@@ -121,65 +157,86 @@ $result = mysqli_query($conn, "
                 <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
             <?php endif; ?>
     
-            <form method="post">
+            <div>
+                <form method="post">
+                    <div>
+                        <div>
+                            <label>Room Number:</label>
+                            <input type="text" name="room_number" value="<?php echo htmlspecialchars($room_number); ?>">
+                        </div>
+    
+                        <div>
+                            <label>Class:</label>
+                            <select name="class">
+                                <!-- Use foreach for arrays, whlie is for cursors that advance -->
+                                <?php foreach ($valid_classes as $class_option): ?>
+                                    <option value="<?php echo $class_option; ?>" <?php echo $class === $class_option ? "selected" : ""; ?>><?php echo $class_option; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+    
+                        <div>
+                            <label>Price:</label>
+                            <input type="text" name="price" value="<?php echo htmlspecialchars($price); ?>">
+                        </div>
+                    </div>
+        
+                    <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
+                    <?php if($edit_id !== ""): ?>
+                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
+                    <?php endif; ?>
+                    <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
+                    
+                    <?php if($edit_id !== ""): ?>
+                        <a href="rooms.php">Cancel</a>
+                    <?php endif; ?>
+                </form>
+        
+                <div class="flex flex-row justify-between items-center">
+                <p>Room</p>
                 <div>
-                    <div>
-                        <label>Room Number:</label>
-                        <input type="text" name="room_number" value="<?php echo htmlspecialchars($room_number); ?>">
-                    </div>
-
-                    <div>
-                        <label>Class:</label>
-                        <select name="class">
-                            <!-- Use foreach for arrays, whlie is for cursors that advance -->
-                            <?php foreach ($valid_classes as $class_option): ?>
-                                <option value="<?php echo $class_option; ?>" <?php echo $class === $class_option ? "selected" : ""; ?>><?php echo $class_option; ?></option>
-                            <?php endforeach; ?>
+                    <form method="get">
+                        <input placeholder="Search" name="search" value="<?php echo htmlspecialchars($search); ?>" class="border-b border-black">
+                        <select name="sort" onchange="this.form.submit()">
+                            <option value="newest" <?php echo $sort === "newest" ? "selected" : ""; ?>>Newest first</option>
+                            <option value="oldest" <?php echo $sort === "oldest" ? "selected" : ""; ?>>Oldest first</option>
+                            <option value="room_az" <?php echo $sort === "room_az" ? "selected" : ""; ?>>Room number A-Z</option>
+                            <option value="room_za" <?php echo $sort === "room_za" ? "selected" : ""; ?>>Room number Z-A</option>
+                            <option value="class_az" <?php echo $sort === "class_az" ? "selected" : ""; ?>>Class A-Z</option>
+                            <option value="price_low" <?php echo $sort === "price_low" ? "selected" : ""; ?>>Price low to high</option>
+                            <option value="price_high" <?php echo $sort === "price_high" ? "selected" : ""; ?>>Price high to low</option>
                         </select>
-                    </div>
-
-                    <div>
-                        <label>Price:</label>
-                        <input type="text" name="price" value="<?php echo htmlspecialchars($price); ?>">
-                    </div>
+                    </form>
                 </div>
-    
-                <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
-                <?php if($edit_id !== ""): ?>
-                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
-                <?php endif; ?>
-                <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
-                
-                <?php if($edit_id !== ""): ?>
-                    <a href="rooms.php">Cancel</a>
-                <?php endif; ?>
-            </form>
-    
+            </div>
+
             <table>
-                <thead>
-                    <tr><th>No</th><th>Room Number</th><th>Class</th><th>Price</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    <?php $row_number = 1; ?>
-                    <?php while($row = mysqli_fetch_assoc($result)): ?>
-                        <tr>
-                            <td><?php echo $row_number; ?></td>
-                            <td><?php echo htmlspecialchars($row["room_number"]); ?></td>
-                            <td><?php echo htmlspecialchars($row["class"]); ?></td>
-                            <td><?php echo htmlspecialchars($row["price"]); ?></td>
-                            <td>
-                                <a href="rooms.php?id=<?php echo htmlspecialchars($row["id"]); ?>">Edit</a>
-                                <form method="post">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["id"]); ?>">
-                                    <button type="submit" onclick="return confirm('Delete this room?')">Delete</button>
-                                </form>
-                            </td>
-                            <?php $row_number++; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    <thead>
+                        <tr><th>No</th><th>Room Number</th><th>Class</th><th>Price</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php $row_number = 1; ?>
+                        <?php while($row = mysqli_fetch_assoc($result)): ?>
+                            <tr>
+                                <td><?php echo $row_number; ?></td>
+                                <td><?php echo htmlspecialchars($row["room_number"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["class"]); ?></td>
+                                <td><?php echo htmlspecialchars($row["price"]); ?></td>
+                                <td>
+                                    <a href="rooms.php?id=<?php echo htmlspecialchars($row["id"]); ?>">Edit</a>
+                                    <form method="post">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["id"]); ?>">
+                                        <button type="submit" onclick="return confirm('Delete this room?')">Delete</button>
+                                    </form>
+                                </td>
+                                <?php $row_number++; ?>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+
         </main>
     </body>    
 </html>
