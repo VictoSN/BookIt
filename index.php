@@ -75,79 +75,83 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
         <title>bookIt</title>
     </head>
     <body>
-        <?php if($error !== ""): ?>
-            <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
-        <?php endif; ?>
+        <?php include "nav.php"; ?>
 
-        <form method="post">
-            <div>
+        <main>
+            <?php if($error !== ""): ?>
+                <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
+            <?php endif; ?>
+    
+            <form method="post">
                 <div>
-                    <label>Name:</label>
-                    <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>">
+                    <div>
+                        <label>Name:</label>
+                        <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>">
+                    </div>
+    
+                    <div>
+                        <label>Date of Birth:</label>
+                        <input type="date" name="birth_date" max="<?php echo date("Y-m-d"); ?>" value="<?php echo htmlspecialchars($birth_date); ?>">
+                    </div>
+    
+                    <div>
+                        <label>Booking Date:</label>
+                        <input type="date" name="booking_date" min="<?php echo date("Y-m-d"); ?>" value="<?php echo htmlspecialchars($booking_date); ?>">
+                    </div>
+    
+                    <div>
+                        <label>Room Option:</label>
+                        <select name="room_id">
+                            <?php while ($room = mysqli_fetch_assoc($rooms)): ?>
+                                <option value="<?php echo $room["id"]; ?>">
+                                    Room <?php echo htmlspecialchars($room["room_number"]); ?> - $<?php echo htmlspecialchars($room["price"]); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label>Service Option:</label>
+                        <select name="service_id">
+                            <option value="">None</option>
+                            <?php while ($service = mysqli_fetch_assoc($services)): ?>
+                                <option value="<?php echo $service["id"]; ?>">
+                                    <?php echo htmlspecialchars($service["service_name"]); ?> <?php echo htmlspecialchars($service["service_number"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
                 </div>
-
-                <div>
-                    <label>Date of Birth:</label>
-                    <input type="date" name="birth_date" max="<?php echo date("Y-m-d"); ?>" value="<?php echo htmlspecialchars($birth_date); ?>">
-                </div>
-
-                <div>
-                    <label>Booking Date:</label>
-                    <input type="date" name="booking_date" min="<?php echo date("Y-m-d"); ?>" value="<?php echo htmlspecialchars($booking_date); ?>">
-                </div>
-
-                <div>
-                    <label>Room Option:</label>
-                    <select name="room_id">
-                        <?php while ($room = mysqli_fetch_assoc($rooms)): ?>
-                            <option value="<?php echo $room["id"]; ?>">
-                                Room <?php echo htmlspecialchars($room["room_number"]); ?> - $<?php echo htmlspecialchars($room["price"]); ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                
-                <div>
-                    <label>Service Option:</label>
-                    <select name="service_id">
-                        <option value="">None</option>
-                        <?php while ($service = mysqli_fetch_assoc($services)): ?>
-                            <option value="<?php echo $service["id"]; ?>">
-                                <?php echo htmlspecialchars($service["service_name"]); ?> <?php echo htmlspecialchars($service["service_number"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
-                            </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-            </div>
-
-            <input type="hidden" name="action" value="add">
-            <button type="submit">Add</button>
-        </form>
-
-        <table>
-            <thead>
-                <tr><th>Name</th><th>Date of Birth</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-                <?php while($row = mysqli_fetch_assoc($result)): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row["name"]); ?></td>
-                        <td><?php echo $row["birth_date"]; ?></td>
-                        <td><?php echo $row["booking_date"]; ?></td>
-                        <td><?php echo htmlspecialchars($row["room_number"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
-                        <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . " - " . htmlspecialchars($row["service_name"]) : "-"; ?></td>
-                        <td><?php echo $row["total_price"]; ?></td>
-                        <td><?php echo $row["created_at"]; ?></td>
-                        <td>
-                            <form method="post">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["guest_id"]); ?>">
-                                <button type="submit" onclick="return confirm('Delete this booking?')">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+    
+                <input type="hidden" name="action" value="add">
+                <button type="submit">Add</button>
+            </form>
+    
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Date of Birth</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    <?php while($row = mysqli_fetch_assoc($result)): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row["name"]); ?></td>
+                            <td><?php echo $row["birth_date"]; ?></td>
+                            <td><?php echo $row["booking_date"]; ?></td>
+                            <td><?php echo htmlspecialchars($row["room_number"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
+                            <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . " - " . htmlspecialchars($row["service_name"]) : "-"; ?></td>
+                            <td><?php echo $row["total_price"]; ?></td>
+                            <td><?php echo $row["created_at"]; ?></td>
+                            <td>
+                                <form method="post">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["guest_id"]); ?>">
+                                    <button type="submit" onclick="return confirm('Delete this booking?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </main>
     </body>    
 </html>
