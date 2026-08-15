@@ -35,7 +35,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             exit;
         }
     } elseif ($action === "delete") {
-        // Add validation to ensure nothing is deleted that is currently being used
+        $count_stmt = mysqli_prepare($conn, "SELECT COUNT(*) FROM guests WHERE room_id = ?");
+        mysqli_stmt_bind_param($count_stmt, "i", $id);
+        mysqli_stmt_execute($count_stmt);
+        $count_result = mysqli_stmt_get_result($count_stmt);
+        $count = mysqli_fetch_row($count_result)[0];
+
+        if ($count > 0) {
+            $error = "This room has $count booking(s) — reassign or delete them first.";
+        }
+
         if(!is_numeric($id)) {
             $error = "Invalid room id.";
         } elseif ($error === "") {
@@ -63,7 +72,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } elseif (!in_array($class, $valid_classes)) {
             $error = "Pick a valid class.";
         }
-
 
         if ($error === "") {    
             $stmt = mysqli_prepare($conn, "UPDATE rooms SET room_number=?, class=?, price=? WHERE id=?");
