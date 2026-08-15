@@ -1,12 +1,15 @@
 <?php 
 require "db.php";
 
+$edit_id = $_GET["id"] ?? "";
 $id = $_POST["id"] ?? "";
+
 $name = $_POST["name"] ?? "";
 $birth_date = $_POST["birth_date"] ?? "";
 $booking_date = $_POST["booking_date"] ?? "";
 $room_id = $_POST["room_id"] ?? "";
 $service_id = $_POST["service_id"] ?? "";
+
 $error = "";
 $action = $_POST["action"] ?? "";
 
@@ -18,7 +21,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $room_id = trim($room_id);
         $service_id = trim($service_id);
     
-        
         if ($name === "" || $birth_date === "" || $booking_date === "" || $room_id === "") {
             $error = "Enter valid details.";
         }
@@ -54,7 +56,54 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             $error = "That booking no longer exists.";
         }
+    } elseif ($action === "update") {
+        $name = trim($name);
+        $birth_date = trim($birth_date);
+        $booking_date = trim($booking_date);
+        $room_id = trim($room_id);
+        $service_id = trim($service_id);
+    
+        if (!is_numeric($id)) {
+            $error = "Invalid booking id.";
+        }
+
+        if ($name === "" || $birth_date === "" || $booking_date === "" || $room_id === "") {
+            $error = "Enter valid details.";
+        }
+
+        $today = date("Y-m-d");
+        if ($birth_date > $today) { $error = "Birth date can't be in the future."; }
+            
+        if ($error === "") {
+            if ($service_id === "") {
+                $service_id = null;
+            }
+    
+            $stmt = mysqli_prepare($conn, "UPDATE guests SET name=?, birth_date=?, booking_date=?, room_id=?, service_id=? WHERE id=?");
+            mysqli_stmt_bind_param($stmt, "sssiii", $name, $birth_date, $booking_date, $room_id, $service_id, $id);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+    
+            header("Location: index.php");
+            exit;
+        }
     }
+}
+
+if ($edit_id !== "" && is_numeric($edit_id) && $_SERVER["REQUEST_METHOD"] !== "POST") {
+    $stmt = mysqli_prepare($conn, "SELECT name, birth_date, booking_date, room_id, service_id FROM guests WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $edit_id);
+    mysqli_stmt_execute($stmt);
+    $edit_result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($edit_result);
+    if($row !== null) {
+        $name = $row["name"];
+        $birth_date = $row["birth_date"];
+        $booking_date = $row["booking_date"];
+        $room_id = $row["room_id"];
+        $service_id = $row["service_id"] ?? "";
+    }
+    mysqli_stmt_close($stmt);
 }
 
 $result = mysqli_query($conn, "
@@ -96,14 +145,14 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
     
                     <div>
                         <label>Booking Date:</label>
-                        <input type="date" name="booking_date" min="<?php echo date("Y-m-d"); ?>" value="<?php echo htmlspecialchars($booking_date); ?>">
+                        <input type="date" name="booking_date" <?php $edit_id === "" ? 'min="' . date("Y-m-d") . '"' : "" ?> value="<?php echo htmlspecialchars($booking_date); ?>">
                     </div>
     
                     <div>
                         <label>Room Option:</label>
                         <select name="room_id">
                             <?php while ($room = mysqli_fetch_assoc($rooms)): ?>
-                                <option value="<?php echo $room["id"]; ?>">
+                                <option value="<?php echo $room["id"]; ?>" <?php echo (string)$room["id"] === (string)$room_id ? "selected" : ""; ?>>
                                     Room <?php echo htmlspecialchars($room["room_number"]); ?> - $<?php echo htmlspecialchars($room["price"]); ?>
                                 </option>
                             <?php endwhile; ?>
@@ -113,9 +162,9 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                     <div>
                         <label>Service Option:</label>
                         <select name="service_id">
-                            <option value="">None</option>
+                            <option value="" <?php echo $service_id === "" ? "selected" : ""; ?>>None</option>
                             <?php while ($service = mysqli_fetch_assoc($services)): ?>
-                                <option value="<?php echo $service["id"]; ?>">
+                                <option value="<?php echo $service["id"]; ?>" <?php echo (string)$service["id"] === (string)$service_id ? "selected" : ""; ?>>
                                     <?php echo htmlspecialchars($service["service_name"]); ?> <?php echo htmlspecialchars($service["service_number"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
                                 </option>
                             <?php endwhile; ?>
@@ -123,8 +172,15 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                     </div>
                 </div>
     
-                <input type="hidden" name="action" value="add">
-                <button type="submit">Add</button>
+                <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
+                <?php if($edit_id !== ""): ?>
+                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
+                <?php endif; ?>
+                <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
+                
+                <?php if($edit_id !== ""): ?>
+                    <a href="index.php">Cancel</a>
+                <?php endif; ?>
             </form>
     
             <table>
@@ -142,6 +198,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                             <td><?php echo $row["total_price"]; ?></td>
                             <td><?php echo $row["created_at"]; ?></td>
                             <td>
+                                <a href="index.php?id=<?php echo htmlspecialchars($row["guest_id"]); ?>">Edit</a>
                                 <form method="post">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["guest_id"]); ?>">
