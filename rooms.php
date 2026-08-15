@@ -152,48 +152,13 @@ $result = mysqli_stmt_get_result($stmt);
         <?php include "head.php"; ?>
     </head>
     <body>
-        <main>
+        <main class="flex flex-col w-full px-8">
             <?php if($error !== ""): ?>
                 <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
             <?php endif; ?>
     
-            <div>
-                <form method="post">
-                    <div>
-                        <div>
-                            <label>Room Number:</label>
-                            <input type="text" name="room_number" value="<?php echo htmlspecialchars($room_number); ?>">
-                        </div>
-    
-                        <div>
-                            <label>Class:</label>
-                            <select name="class">
-                                <!-- Use foreach for arrays, whlie is for cursors that advance -->
-                                <?php foreach ($valid_classes as $class_option): ?>
-                                    <option value="<?php echo $class_option; ?>" <?php echo $class === $class_option ? "selected" : ""; ?>><?php echo $class_option; ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-    
-                        <div>
-                            <label>Price:</label>
-                            <input type="text" name="price" value="<?php echo htmlspecialchars($price); ?>">
-                        </div>
-                    </div>
-        
-                    <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
-                    <?php if($edit_id !== ""): ?>
-                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
-                    <?php endif; ?>
-                    <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
-                    
-                    <?php if($edit_id !== ""): ?>
-                        <a href="rooms.php">Cancel</a>
-                    <?php endif; ?>
-                </form>
-        
-                <div class="flex flex-row justify-between items-center">
-                <p>Room</p>
+            <div class="flex flex-row justify-between items-center">
+                <p class="text-xl font-bold">Room</p>
                 <div>
                     <form method="get">
                         <input placeholder="Search" name="search" value="<?php echo htmlspecialchars($search); ?>" class="border-b border-black">
@@ -211,32 +176,64 @@ $result = mysqli_stmt_get_result($stmt);
             </div>
 
             <table>
-                    <thead>
-                        <tr><th>No</th><th>Room Number</th><th>Class</th><th>Price</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody>
-                        <?php $row_number = 1; ?>
-                        <?php while($row = mysqli_fetch_assoc($result)): ?>
-                            <tr>
-                                <td><?php echo $row_number; ?></td>
-                                <td><?php echo htmlspecialchars($row["room_number"]); ?></td>
-                                <td><?php echo htmlspecialchars($row["class"]); ?></td>
-                                <td><?php echo htmlspecialchars($row["price"]); ?></td>
-                                <td>
-                                    <a href="rooms.php?id=<?php echo htmlspecialchars($row["id"]); ?>">Edit</a>
-                                    <form method="post">
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["id"]); ?>">
-                                        <button type="submit" onclick="return confirm('Delete this room?')">Delete</button>
-                                    </form>
-                                </td>
-                                <?php $row_number++; ?>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            </div>
+                <thead>
+                    <tr><th>No</th><th>Room Number</th><th>Class</th><th>Price</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    <?php $row_number = 1; ?>
+                    <?php while($row = mysqli_fetch_assoc($result)): ?>
+                        <tr>
+                            <td><?php echo $row_number; ?></td>
+                            <td><?php echo htmlspecialchars($row["room_number"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["class"]); ?></td>
+                            <td><?php echo htmlspecialchars($row["price"]); ?></td>
+                            <td>
+                                <a href="rooms.php?id=<?php echo htmlspecialchars($row["id"]); ?>">Edit</a>
+                                <form method="post">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["id"]); ?>">
+                                    <button type="submit" onclick="return confirm('Delete this room?')">Delete</button>
+                                </form>
+                            </td>
+                            <?php $row_number++; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
 
+            <form method="post" class="fixed bottom-10">
+                <div class="flex flex-row gap-2">
+                    <div>
+                        <label>Room Number:</label>
+                        <input type="text" name="room_number" value="<?php echo htmlspecialchars($room_number); ?>">
+                    </div>
+
+                    <div>
+                        <label>Class:</label>
+                        <select name="class">
+                            <!-- Use foreach for arrays, whlie is for cursors that advance -->
+                            <?php foreach ($valid_classes as $class_option): ?>
+                                <option value="<?php echo $class_option; ?>" <?php echo $class === $class_option ? "selected" : ""; ?>><?php echo $class_option; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Price:</label>
+                        <input type="text" name="price" value="<?php echo htmlspecialchars($price); ?>">
+                    </div>
+                    
+                    <input type="hidden" name="action" value="<?php echo $edit_id !== "" ? "update" : "add"; ?>">
+                    <?php if($edit_id !== ""): ?>
+                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($edit_id); ?>">
+                    <?php endif; ?>
+                    <button type="submit"><?php echo $edit_id !== "" ? "Update" : "Add"; ?></button>
+                    
+                    <?php if($edit_id !== ""): ?>
+                        <a href="rooms.php">Cancel</a>
+                    <?php endif; ?>
+                </div>
+            </form>
         </main>
     </body>    
 </html>

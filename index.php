@@ -149,7 +149,7 @@ if ($like !== "") {
         CAST((r.price + COALESCE(s.price, 0)) AS CHAR) LIKE ?
     )";
     $types .= "ssssssss";
-    for ($i = 0; $i < 8; $i++) {
+    for ($i = 0; $i < 7; $i++) {
         $params[] = "%$like%";
     }
 }
@@ -180,7 +180,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
             <?php endif; ?>
         
             <div class="flex flex-row justify-between items-center">
-                <p>Booking</p>
+                <p class="text-xl font-bold">Booking</p>
                 <div>
                     <form method="get">
                         <input placeholder="Search" name="search" value="<?php echo htmlspecialchars($search); ?>" class="border-b border-black">
