@@ -47,9 +47,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt = mysqli_prepare($conn, "DELETE FROM guests WHERE id = ?");
             mysqli_stmt_bind_param($stmt, "i", $id);
             mysqli_stmt_execute($stmt);
-            mysqli_stmt_close($stmt);
-            header("Location: index.php");
-            exit;
+            if(mysqli_affected_rows($conn) === 1) {
+                mysqli_stmt_close($stmt);
+                header("Location: index.php");
+                exit;
+            }
+            $error = "That booking no longer exists.";
         }
     }
 }
