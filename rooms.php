@@ -19,11 +19,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $class = trim($class);
         $price = trim($price);
     
-        if ($room_number === "" || $class === "" || $price === "" || !is_numeric($price)) {
+        if ($room_number === "" || $class === "" || $price === "" || $price < 0 || !is_numeric($price)) {
             $error = "Enter valid details.";
-        }
-
-        if (!in_array($class, $valid_classes)) {
+        } elseif (!in_array($class, $valid_classes)) {
             $error = "Pick a valid class.";
         }
 
@@ -60,11 +58,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "Invalid room id.";
         }
 
-        if ($room_number === "" || $class === "" || $price === "" || !is_numeric($price)) {
+        if ($room_number === "" || $class === "" || $price === "" || $price < 0 || !is_numeric($price)) {
             $error = "Enter valid details.";
-        }
-
-        if (!in_array($class, $valid_classes)) {
+        } elseif (!in_array($class, $valid_classes)) {
             $error = "Pick a valid class.";
         }
 
