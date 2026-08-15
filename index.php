@@ -145,7 +145,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
     
                     <div>
                         <label>Booking Date:</label>
-                        <input type="date" name="booking_date" <?php $edit_id === "" ? 'min="' . date("Y-m-d") . '"' : "" ?> value="<?php echo htmlspecialchars($booking_date); ?>">
+                        <input type="date" name="booking_date" <?php echo $edit_id === "" ? 'min="' . date("Y-m-d") . '"' : "" ?> value="<?php echo htmlspecialchars($booking_date); ?>">
                     </div>
     
                     <div>
