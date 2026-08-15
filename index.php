@@ -1,6 +1,7 @@
 <?php 
 require "db.php";
 
+// Default blocks
 $edit_id = $_GET["id"] ?? "";
 $id = $_POST["id"] ?? "";
 
@@ -13,6 +14,7 @@ $service_id = $_POST["service_id"] ?? "";
 $error = "";
 $action = $_POST["action"] ?? "";
 
+// The router, every form have a hidden 'action' field and this decides the action
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($action === "add") {
         $name = trim($name);
@@ -29,6 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($booking_date < $today) { $error = "Booking date must be today or later."; }
         if ($birth_date > $today) { $error = "Birth date can't be in the future."; }
             
+        // if not service is choosen, ensure its made into null
         if ($error === "") {
             if ($service_id === "") {
                 $service_id = null;
@@ -90,6 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
+// if its in edit mode, prefill the variables
 if ($edit_id !== "" && is_numeric($edit_id) && $_SERVER["REQUEST_METHOD"] !== "POST") {
     $stmt = mysqli_prepare($conn, "SELECT name, birth_date, booking_date, room_id, service_id FROM guests WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "i", $edit_id);
@@ -152,6 +156,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                         <label>Room Option:</label>
                         <select name="room_id">
                             <?php while ($room = mysqli_fetch_assoc($rooms)): ?>
+                                <!-- Convert the row id and current room_id into string to compare them -->
                                 <option value="<?php echo $room["id"]; ?>" <?php echo (string)$room["id"] === (string)$room_id ? "selected" : ""; ?>>
                                     Room <?php echo htmlspecialchars($room["room_number"]); ?> - $<?php echo htmlspecialchars($room["price"]); ?>
                                 </option>
@@ -164,6 +169,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                         <select name="service_id">
                             <option value="" <?php echo $service_id === "" ? "selected" : ""; ?>>None</option>
                             <?php while ($service = mysqli_fetch_assoc($services)): ?>
+                                <!-- Convert the service id and current service_id into string to compare them -->
                                 <option value="<?php echo $service["id"]; ?>" <?php echo (string)$service["id"] === (string)$service_id ? "selected" : ""; ?>>
                                     <?php echo htmlspecialchars($service["service_name"]); ?> <?php echo htmlspecialchars($service["service_number"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
                                 </option>

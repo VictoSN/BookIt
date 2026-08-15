@@ -1,3 +1,4 @@
+<!-- Shared sidebar for every page -->
 <aside>
     <nav>
         <a href="index.php">Bookings</a>

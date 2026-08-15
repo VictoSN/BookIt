@@ -42,12 +42,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $count = mysqli_fetch_row($count_result)[0];
 
         if ($count > 0) {
-            $error = "This room has $count booking(s) — reassign or delete them first.";
+            $error = "This room has $count booking(s), reassign or delete them first.";
         }
 
         if(!is_numeric($id)) {
             $error = "Invalid room id.";
         } elseif ($error === "") {
+            // Ensure booked rooms cannot be deleted
             $stmt = mysqli_prepare($conn, "DELETE FROM rooms WHERE id = ?");
             mysqli_stmt_bind_param($stmt, "i", $id);
             mysqli_stmt_execute($stmt);
@@ -129,6 +130,7 @@ $result = mysqli_query($conn, "
                     <div>
                         <label>Class:</label>
                         <select name="class">
+                            <!-- Use foreach for arrays, whlie is for cursors that advance -->
                             <?php foreach ($valid_classes as $class_option): ?>
                                 <option value="<?php echo $class_option; ?>" <?php echo $class === $class_option ? "selected" : ""; ?>><?php echo $class_option; ?></option>
                             <?php endforeach; ?>
