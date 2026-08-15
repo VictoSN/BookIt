@@ -15,14 +15,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $room_id = trim($room_id);
     $service_id = trim($service_id);
 
-    $today = date("Y-m-d");
-    if ($booking_date < $today) { $error = "Booking date must be today or later."; }
-    if ($birth_date < $today) { $error = "Birth date can't be in the future."; }
-
+    
     if ($name === "" || $birth_date === "" || $booking_date === "" || $room_id === "") {
         $error = "Enter valid details.";
     }
 
+    $today = date("Y-m-d");
+    if ($booking_date < $today) { $error = "Booking date must be today or later."; }
+    if ($birth_date > $today) { $error = "Birth date can't be in the future."; }
+        
     if ($error === "") {
         if ($service_id === "") {
             $service_id = null;
@@ -39,15 +40,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 
 $result = mysqli_query($conn, "
-    SELECT g.name, g.birth_date, g.booking_date, r.id, r.class, s.service_name, r.price, s.price g.created_at 
+    SELECT g.name, g.birth_date, g.booking_date, r.room_number, r.class, s.service_number, s.service_name, (r.price + COALESCE(s.price, 0)) AS total_price, g.created_at 
     FROM guests g
     LEFT JOIN rooms r ON g.room_id = r.id
     LEFT JOIN services s ON g.service_id = s.id
     ORDER BY created_at DESC
 ");
 
-$rooms = mysqli_query($conn, "SELECT id, class, price FROM rooms ORDER BY id DESC");
-$services = mysqli_query($conn, "SELECT id, service_name, price FROM services ORDER BY id DESC");
+$rooms = mysqli_query($conn, "SELECT id, room_number, class, price FROM rooms ORDER BY id DESC");
+$services = mysqli_query($conn, "SELECT id, service_name, service_number, price FROM services ORDER BY id DESC");
 ?>
 
 <!DOCTYPE html>
@@ -82,7 +83,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, price FROM services OR
                     <select name="room_id">
                         <?php while ($room = mysqli_fetch_assoc($rooms)): ?>
                             <option value="<?php echo $room["id"]; ?>">
-                                Room <?php echo htmlspecialchars($room["id"]); ?> - $<?php echo htmlspecialchars($room["price"]); ?>
+                                Room <?php echo htmlspecialchars($room["room_number"]); ?> - $<?php echo htmlspecialchars($room["price"]); ?>
                             </option>
                         <?php endwhile; ?>
                     </select>
@@ -93,7 +94,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, price FROM services OR
                     <select name="service_id">
                         <?php while ($service = mysqli_fetch_assoc($services)): ?>
                             <option value="<?php echo $service["id"]; ?>">
-                                <?php echo htmlspecialchars($service["service_name"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
+                                <?php echo htmlspecialchars($service["service_name"]); ?> <?php echo htmlspecialchars($service["service_number"]); ?> - $<?php echo htmlspecialchars($service["price"]); ?>
                             </option>
                         <?php endwhile; ?>
                     </select>
@@ -113,8 +114,8 @@ $services = mysqli_query($conn, "SELECT id, service_name, price FROM services OR
                         <td><?php echo htmlspecialchars($row["name"]); ?></td>
                         <td><?php echo $row["birth_date"]; ?></td>
                         <td><?php echo $row["booking_date"]; ?></td>
-                        <td><?php echo htmlspecialchars($row["id"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
-                        <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_name"]) : "-"; ?></td>
+                        <td><?php echo htmlspecialchars($row["room_number"]); ?> - <?php echo htmlspecialchars($row["class"]); ?></td>
+                        <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . "-" . htmlspecialchars($row["service_name"]) : "-"; ?></td>
                         <td><?php echo $row["total_price"]; ?></td>
                         <td><?php echo $row["created_at"]; ?></td>
                     </tr>

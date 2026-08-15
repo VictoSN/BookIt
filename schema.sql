@@ -3,6 +3,7 @@ USE bookit;
 
 CREATE TABLE IF NOT EXISTS rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    room_number VARCHAR(7), -- A-10-12
     class VARCHAR(20), -- Premium / En-Suite / Twin...
     price INT
 );
@@ -10,6 +11,7 @@ CREATE TABLE IF NOT EXISTS rooms (
 CREATE TABLE IF NOT EXISTS services (
     id INT AUTO_INCREMENT PRIMARY KEY,
     service_name VARCHAR(100), -- Breakfast/Lunch included...
+    service_number VARCHAR(7), -- B-10, L-2, D-7
     price INT
 );
 
