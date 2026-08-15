@@ -1,41 +1,56 @@
 <?php 
 require "db.php";
 
+$id = $_POST["id"] ?? "";
 $name = $_POST["name"] ?? "";
 $birth_date = $_POST["birth_date"] ?? "";
 $booking_date = $_POST["booking_date"] ?? "";
 $room_id = $_POST["room_id"] ?? "";
 $service_id = $_POST["service_id"] ?? "";
 $error = "";
+$action = $_POST["action"] ?? "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $name = trim($name);
-    $birth_date = trim($birth_date);
-    $booking_date = trim($booking_date);
-    $room_id = trim($room_id);
-    $service_id = trim($service_id);
-
+    if ($action === "add") {
+        $name = trim($name);
+        $birth_date = trim($birth_date);
+        $booking_date = trim($booking_date);
+        $room_id = trim($room_id);
+        $service_id = trim($service_id);
     
-    if ($name === "" || $birth_date === "" || $booking_date === "" || $room_id === "") {
-        $error = "Enter valid details.";
-    }
-
-    $today = date("Y-m-d");
-    if ($booking_date < $today) { $error = "Booking date must be today or later."; }
-    if ($birth_date > $today) { $error = "Birth date can't be in the future."; }
         
-    if ($error === "") {
-        if ($service_id === "") {
-            $service_id = null;
+        if ($name === "" || $birth_date === "" || $booking_date === "" || $room_id === "") {
+            $error = "Enter valid details.";
         }
-
-        $stmt = mysqli_prepare($conn, "INSERT INTO guests (name, birth_date, booking_date, room_id, service_id) VALUES (?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "sssii", $name, $birth_date, $booking_date, $room_id, $service_id);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
-
-        header("Location: index.php");
-        exit;
+    
+        $today = date("Y-m-d");
+        if ($booking_date < $today) { $error = "Booking date must be today or later."; }
+        if ($birth_date > $today) { $error = "Birth date can't be in the future."; }
+            
+        if ($error === "") {
+            if ($service_id === "") {
+                $service_id = null;
+            }
+    
+            $stmt = mysqli_prepare($conn, "INSERT INTO guests (name, birth_date, booking_date, room_id, service_id) VALUES (?, ?, ?, ?, ?)");
+            mysqli_stmt_bind_param($stmt, "sssii", $name, $birth_date, $booking_date, $room_id, $service_id);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+    
+            header("Location: index.php");
+            exit;
+        }
+    } elseif ($action === "delete") {
+        if(!is_numeric($id)) {
+            $error = "Invalid booking id.";
+        } elseif ($error === "") {
+            $stmt = mysqli_prepare($conn, "DELETE FROM guests WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, "i", $id);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            header("Location: index.php");
+            exit;
+        }
     }
 }
 
@@ -102,12 +117,13 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                 </div>
             </div>
 
+            <input type="hidden" name="action" value="add">
             <button type="submit">Add</button>
         </form>
 
         <table>
             <thead>
-                <tr><th>Name</th><th>Date of Birth</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th></tr>
+                <tr><th>Name</th><th>Date of Birth</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 <?php while($row = mysqli_fetch_assoc($result)): ?>
@@ -119,6 +135,13 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                         <td><?php echo $row["service_name"] !== null ? htmlspecialchars($row["service_number"]) . " - " . htmlspecialchars($row["service_name"]) : "-"; ?></td>
                         <td><?php echo $row["total_price"]; ?></td>
                         <td><?php echo $row["created_at"]; ?></td>
+                        <td>
+                            <form method="post">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<?php echo htmlspecialchars($row["guest_id"]); ?>">
+                                <button type="submit" onclick="return confirm('Delete this booking?')">Delete</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
