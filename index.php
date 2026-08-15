@@ -131,20 +131,20 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
     <body>
         <?php include "nav.php"; ?>
 
-        <main>
+        <main class="flex flex-col p-2">
             <?php if($error !== ""): ?>
                 <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
             <?php endif; ?>
     
             <form method="post">
-                <div>
+                <div class="flex flex-row">
                     <div>
                         <label>Name:</label>
                         <input type="text" name="name" value="<?php echo htmlspecialchars($name); ?>">
                     </div>
-    
+
                     <div>
-                        <label>Date of Birth:</label>
+                        <label>Birth Date:</label>
                         <input type="date" name="birth_date" max="<?php echo date("Y-m-d"); ?>" value="<?php echo htmlspecialchars($birth_date); ?>">
                     </div>
     
@@ -154,7 +154,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                     </div>
     
                     <div>
-                        <label>Room Option:</label>
+                        <label>Room:</label>
                         <select name="room_id">
                             <?php while ($room = mysqli_fetch_assoc($rooms)): ?>
                                 <!-- Convert the row id and current room_id into string to compare them -->
@@ -166,7 +166,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                     </div>
                     
                     <div>
-                        <label>Service Option:</label>
+                        <label>Service:</label>
                         <select name="service_id">
                             <option value="" <?php echo $service_id === "" ? "selected" : ""; ?>>None</option>
                             <?php while ($service = mysqli_fetch_assoc($services)): ?>
@@ -192,11 +192,13 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
     
             <table>
                 <thead>
-                    <tr><th>Name</th><th>Date of Birth</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
+                    <tr><th>No</th><th>Name</th><th>Birth Date</th><th>Booking Date</th><th>Room</th><th>Service</th><th>Total Price</th><th>Created At</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
+                    <?php $row_number = 1; ?>
                     <?php while($row = mysqli_fetch_assoc($result)): ?>
                         <tr>
+                            <td><?php echo $row_number; ?></td>
                             <td><?php echo htmlspecialchars($row["name"]); ?></td>
                             <td><?php echo $row["birth_date"]; ?></td>
                             <td><?php echo $row["booking_date"]; ?></td>
@@ -212,6 +214,7 @@ $services = mysqli_query($conn, "SELECT id, service_name, service_number, price 
                                     <button type="submit" onclick="return confirm('Delete this booking?')">Delete</button>
                                 </form>
                             </td>
+                            <?php $row_number++; ?>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>

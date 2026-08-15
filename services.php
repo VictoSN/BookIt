@@ -148,11 +148,13 @@ $result = mysqli_query($conn, "
     
             <table>
                 <thead>
-                    <tr><th>Service Name</th><th>Service Number</th><th>Price</th><th>Actions</th></tr>
+                    <tr><th>No</th><th>Service Name</th><th>Service Number</th><th>Price</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
+                    <?php $row_number = 1; ?>
                     <?php while($row = mysqli_fetch_assoc($result)): ?>
                         <tr>
+                            <td><?php echo $row_number; ?></td>
                             <td><?php echo htmlspecialchars($row["service_name"]); ?></td>
                             <td><?php echo htmlspecialchars($row["service_number"]); ?></td>
                             <td><?php echo htmlspecialchars($row["price"]); ?></td>
@@ -164,6 +166,7 @@ $result = mysqli_query($conn, "
                                     <button type="submit" onclick="return confirm('Delete this service?')">Delete</button>
                                 </form>
                             </td>
+                            <?php $row_number++; ?>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>
