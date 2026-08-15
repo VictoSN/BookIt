@@ -7,10 +7,14 @@ A hotel booking manager for keeping track of guests, rooms and services, built w
 1. CRUD for Bookings, Rooms, and Services tables
 2. Automatic total price calculation from the selected room and service
 3. Protection against deleting rooms or services that are still in use by bookings
+4. Search across all columns on every table
+5. Sortable tables through a dropdown, covering name, class and price
 
 ## How it works
 - Plain PHP with no framework, each page is a self-posting route with a hidden action router
 - Every query that touches user input uses prepared statements, and all output is escaped
+- Search builds the WHERE clause dynamically with placeholders, escaping LIKE wildcards so % and _ are searched literally
+- ORDER BY never receives raw user input, a PHP whitelist maps sort keys to safe SQL
 - Foreign keys enforce referential integrity, deleting an in-use room or service is refused
 - Edit mode switches the form through the ?id= URL parameter
 
